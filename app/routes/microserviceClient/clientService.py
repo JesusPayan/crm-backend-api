@@ -22,3 +22,6 @@ class ClientService:
     def update_client(self,id,data):
         logger.info(f"Updating client by id: {id}")
         return Client.update_client(id,data)    
+    def delete_client(self,id):
+        logger.info(f"Deleting client by id: {id}")
+        return Client.delete_client(id)

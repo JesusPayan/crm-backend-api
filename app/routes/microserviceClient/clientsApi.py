@@ -67,7 +67,14 @@ def update_client(id):
         else:
             return jsonify({"message": "Error al actualizar el cliente"}), 400
 
-
+@clients_api.route('/delete_client/<int:id>', methods=['DELETE'])
+def delete_client(id):
+    print("DELETE /client-delete endpoint reached")
+    client_deleted = service.delete_client(id)
+    if client_deleted:
+        return jsonify({"message": "Cliente eliminado correctamente"}), 200
+    else:
+        return jsonify({"message": "Error al eliminar el cliente"}), 400
 
 
 # Esto es clave
