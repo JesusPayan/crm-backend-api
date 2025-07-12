@@ -1,17 +1,14 @@
-from flask import Flask, jsonify
+from flask import Flask
 from bd_config import db
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Date, create_engine, TIMESTAMP,DECIMAL,LargeBinary
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Date,  TIMESTAMP,DECIMAL,LargeBinary
 from sqlalchemy.orm import relationship
-# Base = declarative_base()
-# No es necesario declarar Base si se usa db.Model
-
-#class Role(db.Model):  # Cambié db.model a db.Model
-#    __tablename__ = 'roles'
-#    id = db.Column(db.Integer, primary_key=True)  # Cambié db.column a db.Column
-#    role_name = db.Column(db.String(40), nullable=False)  # Cambié roleName a role_name para seguir la convención
-#    users = relationship("User", back_populates="role")  # Cambié el nombre de la relación a users
+from logger import logger
+from datetime import datetime
+import json
+from flask.json import jsonify
+# Tabla: clients
 class Client(db.Model):
-    __tablename__ = 'clients'
+    __tablename__ = 'client'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     cve_internal = Column(String(50))
@@ -30,11 +27,86 @@ class Client(db.Model):
     updated_by = Column(String(100))
 
     contracts = relationship("Contract", back_populates="client")
+    @staticmethod
+    def delete_client(id):
+        client = db.session.query(Client).filter_by(id=id).delete()
+        db.session.commit()
+        return client
+    @staticmethod
+    def get_all():
+        # client_list = db.session.execute("SELECT * FROM client")
+        
+        client_list = db.session.query(Client).all()
+        
+        if client_list:
+            return client_list
+        else:
+            return None
+    @staticmethod
+    def get_by_id(id):
+        client = db.session.query(Client).filter_by(id=id).first()
+        
+        return client
+    @staticmethod
+    def update_client(id,data):
+        client = db.session.query(Client).filter_by(id=id).update(data)
+        db.session.commit()
+        
+        return client
+    @staticmethod
+    def create_new_client(data):
+        logger.info(f"Creating new client input recived: {data}")
+        if data['name']:
+            name = data['name']
+        if data['father_lastname']:
+            fatherLastname = data['father_lastname']
+        if data['mother_lastname']:
+            mother_lastname = data['mother_lastname']
+        if data['status']:
+            status = data['status']
+        if data['status_desc']:
+            status_desc = data['status_desc']
+        if data['telephone1']:
+            telephone1 = data['telephone1']
+        if data['email1']:
+            email1 = data['email1']
+        if data['email2'] is not None:
+            email2 = data['email2']
+        else:
+            email2 = email1
+        if data['telephone2'] is not None:
+            telephone2 = data['telephone2']
+        else:
+            telephone2 = telephone1
+        if data['created_by']:
+            created_by = data['created_by']
+        created_at = datetime.now()
+        
+        new_client = Client(name=name,
+                        father_lastname=fatherLastname,
+                        mother_lastname=mother_lastname,
+                        status=status,
+                        status_desc=status_desc,
+                        telephone1=telephone1,
+                        telefono2=telephone2,
+                        email1=email1,
+                        email2=email2,
+                        created_at=created_at,
+                        created_by=created_by)
+        try:
+            db.session.add(new_client)
+            db.session.flush()
+            db.session.commit()
+            return new_client
+        except Exception as e:
+            logger.error(f"Error creating new client: {e.with_traceback()}")
+        
+            
 
 
 # Tabla: products
 class Product(db.Model):
-    __tablename__ = 'products'
+    __tablename__ = 'product'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     cve_internal = Column(String(50))
@@ -56,8 +128,8 @@ class Contract(db.Model):
     __tablename__ = 'contracts'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    client_id = Column(Integer, ForeignKey('clients.id'))
-    product_id = Column(Integer, ForeignKey('products.id'))
+    client_id = Column(Integer, ForeignKey('client.id'))
+    product_id = Column(Integer, ForeignKey('product.id'))
     start_date = Column(Date)
     end_date = Column(Date)
     status = Column(Integer)
