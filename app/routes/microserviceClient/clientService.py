@@ -1,5 +1,5 @@
 from logger import logger
-from models import Client
+from app.models import Client
 from datetime import datetime
 class ClientService:
     

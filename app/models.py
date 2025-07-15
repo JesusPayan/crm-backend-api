@@ -1,13 +1,19 @@
+from flask import Flask
 from sqlalchemy import Column, Integer, String, Date, DECIMAL, ForeignKey, TIMESTAMP, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from logger import logger
+from datetime import datetime
+from app import db
+from sqlalchemy.testing.exclusions import db_spec
+from test.test_pydoc.pydocfodder import A_staticmethod_ref2
 # from extensions import db
 
-Base = declarative_base()
+
 
 # Tabla: clients
-class Client(Base):
-    __tablename__ = 'clients'
+class Client(db.Model):
+    __tablename__ = 'client'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     cve_internal = Column(String(50))
@@ -29,8 +35,8 @@ class Client(Base):
 
 
 # Tabla: products
-class Product(Base):
-    __tablename__ = 'products'
+class Product(db.Model):
+    __tablename__ = 'product'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     cve_internal = Column(String(50))
@@ -45,15 +51,70 @@ class Product(Base):
     updated_by = Column(String(100))
 
     contracts = relationship("Contract", back_populates="product")
+    def to_dict(self):
+        return {
+        "id": self.id,
+        "description": self.description,
+        "price": str(self.price),
+        "image": str(self.image),  # Puedes personalizar esto
+        "status": self.status,
+        "status_desc": self.status_desc,
+        "created_at": self.created_at.isoformat() if self.created_at else None,
+        "created_by": self.created_by,
+        "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        "updated_by": self.updated_by
+    }
+    @staticmethod
+    def get_by_id(id):
+        product = db.session.query(Product).filter_by(id=id).first()
+        return product
 
+    @staticmethod
+    def delete_product(id):
+        product = db.session.query(Product).filter_by(id=id).delete()
+        db.session.commit()
+        return product
+    @staticmethod
+    def create_new_product(data):
+        if data:
+                logger.info(f"Creating new product: {data}")
+                
+                if data['description'] is not None:
+                    description = data['description']
+                cve_internal = description[0:3]+ '-' + description[4:]    
+                print(cve_internal)
+                if data['price'] is not None:
+                    price = data['price']
+                if data['status'] is not None:    
+                    status = data['status']
+                if data['status_desc'] is not None:
+                    status_desc = data['status_desc']
+                if data['created_by'] is not None:
+                    created_by = data['created_by']
+   
+                product = Product(
+                    cve_internal=cve_internal,
+                    created_at=datetime.now(),
+                    description=description,
+                    price=price,
+                    status=status,
+                    status_desc=status_desc,
+                    created_by=created_by
+                )
+                db.session.add(product)
+                db.session.flush()
+                db.session.commit()
+                return product
+        else:
+            return product  
 
 # Tabla: contracts
-class Contract(Base):
-    __tablename__ = 'contracts'
+class Contract(db.Model):
+    __tablename__ = 'contract'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    client_id = Column(Integer, ForeignKey('clients.id'))
-    product_id = Column(Integer, ForeignKey('products.id'))
+    client_id = Column(Integer, ForeignKey('client.id'))
+    product_id = Column(Integer, ForeignKey('product.id'))
     start_date = Column(Date)
     end_date = Column(Date)
     status = Column(Integer)
@@ -68,7 +129,7 @@ class Contract(Base):
 
 
 # Tabla: catalogs
-class Catalog(Base):
+class Catalog(db.Model):
     __tablename__ = 'catalogs'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -85,8 +146,8 @@ class Catalog(Base):
 
 
 # Tabla: catalog_values
-class CatalogValue(Base):
-    __tablename__ = 'catalog_values'
+class CatalogValue(db.Model):
+    __tablename__ = 'catalog_value'
 
     catalog_id = Column(Integer, ForeignKey('catalogs.id'), primary_key=True)
     sequence_id = Column(Integer, primary_key=True)
