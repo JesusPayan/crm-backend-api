@@ -1,5 +1,5 @@
 from flask import Flask
-from bd_config import db
+from app import db
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Date,  TIMESTAMP,DECIMAL,LargeBinary
 from sqlalchemy.orm import relationship
 from logger import logger
@@ -26,7 +26,8 @@ class Client(db.Model):
     updated_at = Column(TIMESTAMP)
     updated_by = Column(String(100))
 
-    contracts = relationship("Contract", back_populates="client")
+    # contracts = relationship("Contract", back_populates="client")
+    contracts = db.relationship('Contract', backref='client', lazy=True)
     @staticmethod
     def delete_client(id):
         client = db.session.query(Client).filter_by(id=id).delete()
@@ -39,7 +40,7 @@ class Client(db.Model):
         client_list = db.session.query(Client).all()
         
         if client_list:
-            return client_list
+            return jsonify([client.to_dict() for client in Client.query.all()])
         else:
             return None
     @staticmethod
@@ -101,7 +102,23 @@ class Client(db.Model):
         except Exception as e:
             logger.error(f"Error creating new client: {e.with_traceback()}")
         
-            
+        def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "father_lastname": self.father_lastname,
+            "mother_lastname": self.mother_lastname,
+            "telephone1": self.telephone1,
+            "telefono2": self.telefono2,
+            "email1": self.email1,
+            "email2": self.email2,
+            "status": self.status,
+            "status_desc": self.status_desc,
+            "created_at": self.created_at,
+            "created_by": self.created_by,
+            "updated_at": self.updated_at,
+            "updated_by": self.updated_by
+        }       
 
 
 # Tabla: products
@@ -112,7 +129,7 @@ class Product(db.Model):
     cve_internal = Column(String(50))
     description = Column(String(255))
     price = Column(DECIMAL(10, 2))
-    image = Column(LargeBinary)
+    image = Column(String(255))
     status = Column(Integer)
     status_desc = Column(String(100))
     created_at = Column(TIMESTAMP)
@@ -120,16 +137,53 @@ class Product(db.Model):
     updated_at = Column(TIMESTAMP)
     updated_by = Column(String(100))
 
-    contracts = relationship("Contract", back_populates="product")
+    contracts = db.relationship("Contract", back_populates="product", lazy=True)
 
+    @staticmethod
+    def create_new_product(data):
+        
+        if data['description']:
+            description = data['description']
+        if data['price']:
+            price = data['price']
+        # if data['image']:
+        #     image = data['image'].read()
+        if data['status']:
+            status = data['status']
+        if data['status_desc']:
+            status_desc = data['status_desc']
+        if data['created_by']:
+            created_by = data['created_by']
+        if data['cve_internal']:
+            cve_internal = data['cve_internal']
+        else:
+            cve_internal = f"{description[0:4] + '-'}"
+
+        created_at = datetime.now()
+        new_product = Product(cve_internal=data['cve_internal'],
+                            description=description,
+                            price=price,
+                            image=image,
+                            status=status,
+                            status_desc=status_desc,
+                            created_at=created_at,
+                            created_by=created_by)
+        try:
+            db.session.add(new_product)
+            db.session.flush()
+            db.session.commit()
+            return new_product
+        except Exception as e:
+            logger.error(f"Error creating new product: {e.with_traceback()}")
 
 # Tabla: contracts
 class Contract(db.Model):
-    __tablename__ = 'contracts'
+    __tablename__ = 'contract'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    client_id = Column(Integer, ForeignKey('client.id'))
-    product_id = Column(Integer, ForeignKey('product.id'))
+    # client_id = Column(Integer, ForeignKey('client.id'))
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     start_date = Column(Date)
     end_date = Column(Date)
     status = Column(Integer)
@@ -139,9 +193,8 @@ class Contract(db.Model):
     updated_at = Column(TIMESTAMP)
     updated_by = Column(String(100))
 
-    client = relationship("Client", back_populates="contracts")
-    product = relationship("Product", back_populates="contracts")
-
+    client = db.relationship("Client", back_populates="contracts")
+    product = db.relationship("Product", back_populates="contracts")
 
 # Tabla: catalogs
 class Catalog(db.Model):
