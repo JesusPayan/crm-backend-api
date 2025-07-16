@@ -5,7 +5,7 @@ import os
 
 app.register_blueprint(clients_api, url_prefix="/v1/clients")
 app.register_blueprint(products_api, url_prefix="/v1/products")
-
+app.register_blueprint(contracts_api, url_prefix="/v1/contracts")
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()

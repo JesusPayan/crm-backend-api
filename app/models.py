@@ -126,8 +126,70 @@ class Contract(db.Model):
 
     client = relationship("Client", back_populates="contracts")
     product = relationship("Product", back_populates="contracts")
+    @staticmethod
+    def get_all_contracts():
+        contracts = db.session.query(Contract).all()
+        return contracts
+    @staticmethod
+    def get_by_id(id):
+        contract = db.session.query(Contract).filter_by(id=id).first()
+        return contract
 
+    @staticmethod
+    def delete_contract(id):
+        contract = db.session.query(Contract).filter_by(id=id).delete()
+        db.session.commit()
+        return contract
+    @staticmethod
+    def create_new_contract(data):
+        if data:
+                logger.info(f"Creating new contract: {data}")
+                if data['client_id'] is not None:
+                    client_id = data['client_id']
+                if data['product_id'] is not None:
+                    product_id = data['product_id']
+                if data['start_date'] is not None:
+                    start_date = data['start_date']
+                if data['end_date'] is not None:
+                    end_date = data['end_date']
+                if data['status'] is not None:
+                    status = data['status']
+                if data['status_desc'] is not None:
+                    status_desc = data['status_desc']
+                if data['created_by'] is not None:
+                    created_by = data['created_by']
+    
+                contract = Contract(
+                    client_id=client_id,
+                    product_id=product_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    created_at=datetime.now(),
+                    status=status,
+                    status_desc=status_desc,
+                    created_by=created_by
+                )
+                db.session.add(contract)
+                db.session.flush()
+                db.session.commit()
+                return contract
 
+        else:
+            return None
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "client_id": self.client_id,
+            "product_id": self.product_id,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "status": self.status,
+            "status_desc": self.status_desc,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "created_by": self.created_by,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "updated_by": self.updated_by
+        }
 # Tabla: catalogs
 class Catalog(db.Model):
     __tablename__ = 'catalogs'
