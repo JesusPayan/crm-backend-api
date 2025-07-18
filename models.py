@@ -102,7 +102,7 @@ class Client(db.Model):
         except Exception as e:
             logger.error(f"Error creating new client: {e.with_traceback()}")
         
-        def to_dict(self):
+    def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,

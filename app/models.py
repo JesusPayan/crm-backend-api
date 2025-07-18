@@ -1,4 +1,3 @@
-from flask import Flask
 from sqlalchemy import Column, Integer, String, Date, DECIMAL, ForeignKey, TIMESTAMP, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -13,7 +12,7 @@ from test.test_pydoc.pydocfodder import A_staticmethod_ref2
 
 # Tabla: clients
 class Client(db.Model):
-    __tablename__ = 'client'
+    __tablename__ = 'clients'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     cve_internal = Column(String(50))
@@ -31,12 +30,12 @@ class Client(db.Model):
     updated_at = Column(TIMESTAMP)
     updated_by = Column(String(100))
 
-    contracts = relationship("Contract", back_populates="client")
+    contracts = relationship("Contract", back_populates="clients")
 
 
 # Tabla: products
 class Product(db.Model):
-    __tablename__ = 'product'
+    __tablename__ = 'products'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     cve_internal = Column(String(50))
@@ -50,7 +49,7 @@ class Product(db.Model):
     updated_at = Column(TIMESTAMP)
     updated_by = Column(String(100))
 
-    contracts = relationship("Contract", back_populates="product")
+    contracts = relationship("Contract", back_populates="products")
     def to_dict(self):
         return {
         "id": self.id,
@@ -110,11 +109,11 @@ class Product(db.Model):
 
 # Tabla: contracts
 class Contract(db.Model):
-    __tablename__ = 'contract'
+    __tablename__ = 'contracts'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    client_id = Column(Integer, ForeignKey('client.id'))
-    product_id = Column(Integer, ForeignKey('product.id'))
+    client_id = Column(Integer, ForeignKey('clients.id'))
+    product_id = Column(Integer, ForeignKey('products.id'))
     start_date = Column(Date)
     end_date = Column(Date)
     status = Column(Integer)
@@ -192,6 +191,7 @@ class Contract(db.Model):
         }
 # Tabla: catalogs
 class Catalog(db.Model):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'catalogs'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -204,7 +204,7 @@ class Catalog(db.Model):
     updated_at = Column(TIMESTAMP)
     updated_by = Column(String(100))
 
-    values = relationship("CatalogValue", back_populates="catalog")
+    values = relationship("CatalogValue", back_populates="catalogs")
 
     @staticmethod
     def get_all_catalogs():
@@ -220,7 +220,8 @@ class Catalog(db.Model):
         catalog = db.session.query(Catalog).filter_by(id=id).delete()
         db.session.commit()
         return catalog
-    @def create_new_catalog(data):
+    @staticmethod
+    def create_new_catalog(data):
         if data:
                 logger.info(f"Creating new catalog: {data}")
                 if data['cve_table'] is not None:
@@ -278,7 +279,8 @@ class Catalog(db.Model):
 
 # Tabla: catalog_values
 class CatalogValue(db.Model):
-    __tablename__ = 'catalog_value'
+    __table_args__ = {'extend_existing': True}
+    __tablename__ = 'catalog_values'
 
     catalog_id = Column(Integer, ForeignKey('catalogs.id'), primary_key=True)
     sequence_id = Column(Integer, primary_key=True)
@@ -297,4 +299,4 @@ class CatalogValue(db.Model):
     updated_at = Column(TIMESTAMP)
     updated_by = Column(String(100))
 
-    catalog = relationship("Catalog", back_populates="values")
+    catalog = relationship("Catalog", back_populates="catalog_values")

@@ -1,12 +1,12 @@
 from flask import Blueprint, jsonify, request
 from logger import logger
-from app.routes.microserviceProducts.productService import ProductService
+from app.routes.microserviceCatalogs.catalogsService import CatalogService
 
-contracts_api = Blueprint('catalogsApi', __name__)
+catalogs_api = Blueprint('catalogsApi', __name__)
 service = CatalogService()
 
 
-@contracts_api.route('v1/catalogs', methods=['GET'])
+@catalogs_api.route('v1/catalogs', methods=['GET'])
 def get_catalogs():
     print("GET /catalogs endpoint reached")
     catalogs = service.get_all_catalogs()
@@ -14,7 +14,7 @@ def get_catalogs():
         return jsonify({'catalogs': [catalog.to_dict() for catalog in catalogs]}), 200
     else:
         return jsonify({'message': 'Error getting catalogs'}), 400
-@contracts_api.route('v1/catalogs', methods=['POST'])
+@catalogs_api.route('v1/catalogs', methods=['POST'])
 def add_catalog():
     print("POST /contract-add endpoint reached")
     data = request.get_json()
@@ -33,7 +33,7 @@ def add_catalog():
     else:
         return jsonify({"message": "No se recibió información válida"}), 400
     
-@contracts_api.route('v1/catalogs/<int:id>', methods=['PUT'])
+@catalogs_api.route('v1/catalogs/<int:id>', methods=['PUT'])
 def update_catalog(id):
     print("PUT /contract endpoint reached", id)
     data = request.get_json()
@@ -44,7 +44,7 @@ def update_catalog(id):
         return jsonify({'message': 'Error updating contract'}), 400 
 
 
-@contracts_api.route('v1/catalogs/<int:id>', methods=['DELETE'])
+@catalogs_api.route('v1/catalogs/<int:id>', methods=['DELETE'])
 def delete_catalog(id):
     print("DELETE /contract endpoint reached", id)
     catalog_deleted = service.delete_catalog_by_id(id)
@@ -53,7 +53,7 @@ def delete_catalog(id):
     else:
         return jsonify({'message': 'Error deleting contract'}), 400
 
-@contracts_api.route('v1/catalogs/<int:id>', methods=['GET'])
+@catalogs_api.route('v1/catalogs/<int:id>', methods=['GET'])
 def get_catalog_by_id(id):
     print("GET /contract endpoint reached", id)
     catalog = service.get_catalog_by_id(id)
